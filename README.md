@@ -1,161 +1,161 @@
 # Nutri-OS Agent Documentation
 
-Este repositório contém toda a documentação e diretrizes para assistentes de IA (Lovable e Cursor) que trabalham no projeto Nutri-OS. É projetado para ser usado como um submodule compartilhável entre múltiplos projetos.
+This repository contains all documentation and guidelines for AI assistants (Lovable and Cursor) working on the Nutri-OS project. It is designed to be used as a shareable submodule across multiple projects.
 
-## 📁 Estrutura do Repositório
+## 📁 Repository Structure
 
 ```
 .agents/
-├── README.md                    # Este arquivo - visão geral do repositório
-├── PROJECT_GUIDELINES.md        # Diretrizes principais do projeto
-├── guidelines/                  # Diretrizes específicas por área
-│   ├── ARCHITECTURE.md         # Arquitetura e estrutura de código
-│   ├── GIT_BRANCHING.md        # Workflow do Git e branching
-│   ├── LOCAL_DEVELOPMENT.md    # Ambiente de desenvolvimento local
-│   ├── PRODUCTION.md           # Deploy e produção
-│   └── UI_GUIDELINES.md        # Padrões de UI/UX
-└── troubleshooting/            # Soluções para problemas conhecidos
-    └── MODAL_FREEZE_FIX.md     # Solução para congelamento de modais
+├── README.md                    # This file - repository overview
+├── PROJECT_GUIDELINES.md        # Main project guidelines
+├── guidelines/                  # Area-specific guidelines
+│   ├── ARCHITECTURE.md         # Code architecture and structure
+│   ├── GIT_BRANCHING.md        # Git workflow and branching
+│   ├── LOCAL_DEVELOPMENT.md    # Local development environment
+│   ├── PRODUCTION.md           # Deployment and production
+│   └── UI_GUIDELINES.md        # UI/UX patterns
+└── troubleshooting/            # Solutions for known issues
+    └── MODAL_FREEZE_FIX.md     # Modal freeze solution
 ```
 
-## 🎯 Propósito
+## 🎯 Purpose
 
-Este repositório serve como uma **fonte única de verdade** para:
+This repository serves as a **single source of truth** for:
 
-- **Diretrizes de desenvolvimento** para assistentes de IA
-- **Padrões de código** e arquitetura
-- **Workflows** e processos estabelecidos
-- **Soluções** para problemas técnicos conhecidos
-- **Padrões de UI/UX** e design system
+- **Development guidelines** for AI assistants
+- **Code patterns** and architecture
+- **Workflows** and established processes
+- **Solutions** for known technical issues
+- **UI/UX patterns** and design system
 
-## 🚀 Como Usar
+## 🚀 How to Use
 
-### Para Assistentes de IA (Lovable/Cursor)
+### For AI Assistants (Lovable/Cursor)
 
-1. **Consulte sempre** o arquivo relevante antes de fazer mudanças
-2. **Siga as diretrizes** específicas para cada área (UI, arquitetura, etc.)
-3. **Mantenha consistência** com os padrões estabelecidos
-4. **Nunca faça commits** sem solicitação explícita do usuário
+1. **Always consult** the relevant file before making changes
+2. **Follow guidelines** specific to each area (UI, architecture, etc.)
+3. **Maintain consistency** with established patterns
+4. **Never make commits** without explicit user request
 
-### Para Desenvolvedores
+### For Developers
 
-1. **Leia** o `PROJECT_GUIDELINES.md` para visão geral
-2. **Consulte** as diretrizes específicas conforme necessário
-3. **Atualize** a documentação quando padrões mudarem
-4. **Reporte** inconsistências ou sugestões de melhoria
+1. **Read** `PROJECT_GUIDELINES.md` for overview
+2. **Consult** specific guidelines as needed
+3. **Update** documentation when patterns change
+4. **Report** inconsistencies or improvement suggestions
 
-## 📋 Diretrizes Principais
+## 📋 Main Guidelines
 
 ### 🎨 UI/UX
-- **SEMPRE** use componentes shadcn/ui
-- **NUNCA** use emojis na interface
-- Mantenha padrões de acessibilidade
-- Siga o design system estabelecido
+- **ALWAYS** use shadcn/ui components
+- **NEVER** use emojis in the interface
+- Maintain accessibility standards
+- Follow the established design system
 
-### 💻 Desenvolvimento
-- Use Supabase local para desenvolvimento
-- Siga padrões de TypeScript rigorosamente
-- Implemente tratamento de erros adequado
-- Mantenha componentes focados e reutilizáveis
+### 💻 Development
+- Use Supabase local for development
+- Follow TypeScript patterns rigorously
+- Implement proper error handling
+- Keep components focused and reusable
 
-### 🌿 Git & Versionamento
-- **TODAS** as operações Git em inglês
-- **NUNCA** faça commits sem solicitação explícita
-- Siga estratégia de branching estabelecida
-- Use mensagens de commit descritivas
+### 🌿 Git & Versioning
+- **ALL** Git operations in English
+- **NEVER** make commits without explicit request
+- Follow established branching strategy
+- Use descriptive commit messages
 
-### 🏗️ Arquitetura
+### 🏗️ Architecture
 - React + TypeScript + Supabase
-- Componentes funcionais com hooks
-- Estado global com Zustand quando necessário
-- Custom hooks para lógica de negócio
+- Functional components with hooks
+- Global state with Zustand when needed
+- Custom hooks for business logic
 
-## 🔧 Stack Tecnológica
+## 🔧 Technology Stack
 
 ### Frontend
-- **React 18** com TypeScript
-- **Vite** para build
-- **Tailwind CSS** + **shadcn/ui** para UI
-- **React Router** para navegação
+- **React 18** with TypeScript
+- **Vite** for build
+- **Tailwind CSS** + **shadcn/ui** for UI
+- **React Router** for navigation
 
 ### Backend
 - **Supabase** (PostgreSQL + Edge Functions)
-- **Row Level Security** para proteção de dados
-- **Real-time subscriptions** para atualizações ao vivo
+- **Row Level Security** for data protection
+- **Real-time subscriptions** for live updates
 
-### Ferramentas
-- **ESLint** para linting
-- **Prettier** para formatação
-- **TypeScript** para type safety
+### Tools
+- **ESLint** for linting
+- **Prettier** for formatting
+- **TypeScript** for type safety
 
 ## 🐛 Troubleshooting
 
-### Problemas Conhecidos
-- **Modal Freeze**: Solução documentada em `troubleshooting/MODAL_FREEZE_FIX.md`
-- **Focus Scope Conflicts**: Use `onSelect` com `setTimeout` para dropdowns que abrem modais
+### Known Issues
+- **Modal Freeze**: Solution documented in `troubleshooting/MODAL_FREEZE_FIX.md`
+- **Focus Scope Conflicts**: Use `onSelect` with `setTimeout` for dropdowns that open modals
 
-### Como Reportar Problemas
-1. Verifique se já existe solução na pasta `troubleshooting/`
-2. Documente o problema com detalhes específicos
-3. Inclua passos para reproduzir
-4. Sugira soluções quando possível
+### How to Report Issues
+1. Check if a solution already exists in the `troubleshooting/` folder
+2. Document the problem with specific details
+3. Include steps to reproduce
+4. Suggest solutions when possible
 
-## 🔄 Manutenção
+## 🔄 Maintenance
 
-### Atualizando Diretrizes
-- Diretrizes são documentos vivos
-- Atualize quando padrões mudarem
-- Documente novas convenções
-- Mantenha todos os arquivos sincronizados
+### Updating Guidelines
+- Guidelines are living documents
+- Update when patterns change
+- Document new conventions
+- Keep all files synchronized
 
-### Versionamento
-- Rastreie mudanças nos arquivos de diretrizes
-- Use mensagens de commit descritivas
-- Revise mudanças antes de fazer merge
-- Mantenha diretrizes sincronizadas com o código
+### Versioning
+- Track changes to guideline files
+- Use descriptive commit messages
+- Review changes before merging
+- Keep guidelines synchronized with code
 
-## 📚 Referência Rápida
+## 📚 Quick Reference
 
-| Área | Arquivo | Descrição |
-|------|---------|-----------|
-| **Visão Geral** | `PROJECT_GUIDELINES.md` | Diretrizes principais e referência rápida |
-| **UI/UX** | `guidelines/UI_GUIDELINES.md` | Padrões de interface e design |
-| **Arquitetura** | `guidelines/ARCHITECTURE.md` | Estrutura de código e padrões |
-| **Desenvolvimento** | `guidelines/LOCAL_DEVELOPMENT.md` | Setup e ambiente local |
-| **Git** | `guidelines/GIT_BRANCHING.md` | Workflow e branching |
-| **Produção** | `guidelines/PRODUCTION.md` | Deploy e ambiente de produção |
-| **Problemas** | `troubleshooting/` | Soluções para problemas conhecidos |
+| Area | File | Description |
+|------|------|-------------|
+| **Overview** | `PROJECT_GUIDELINES.md` | Main guidelines and quick reference |
+| **UI/UX** | `guidelines/UI_GUIDELINES.md` | Interface and design patterns |
+| **Architecture** | `guidelines/ARCHITECTURE.md` | Code structure and patterns |
+| **Development** | `guidelines/LOCAL_DEVELOPMENT.md` | Setup and local environment |
+| **Git** | `guidelines/GIT_BRANCHING.md` | Workflow and branching |
+| **Production** | `guidelines/PRODUCTION.md` | Deployment and production environment |
+| **Issues** | `troubleshooting/` | Solutions for known problems |
 
-## 🤝 Contribuindo
+## 🤝 Contributing
 
-### Para Assistentes de IA
-- Sempre consulte as diretrizes antes de fazer mudanças
-- Mantenha consistência com padrões estabelecidos
-- Documente novas soluções na pasta `troubleshooting/`
-- Nunca faça commits sem solicitação explícita
+### For AI Assistants
+- Always consult guidelines before making changes
+- Maintain consistency with established patterns
+- Document new solutions in the `troubleshooting/` folder
+- Never make commits without explicit request
 
-### Para Desenvolvedores
-- Mantenha a documentação atualizada
-- Reporte inconsistências ou melhorias
-- Siga os padrões estabelecidos
-- Contribua com soluções para problemas técnicos
+### For Developers
+- Keep documentation updated
+- Report inconsistencies or improvements
+- Follow established patterns
+- Contribute solutions for technical problems
 
-## 📞 Suporte
+## 📞 Support
 
-### Dúvidas
-1. Consulte o arquivo de diretrizes relevante
-2. Procure exemplos no código existente
-3. Peça esclarecimentos quando necessário
-4. Documente novos padrões conforme surgem
+### Questions
+1. Consult the relevant guideline file
+2. Look for examples in existing code
+3. Ask for clarification when needed
+4. Document new patterns as they emerge
 
-### Problemas
-- Reporte inconsistências nas diretrizes
-- Sugira melhorias nos processos
-- Atualize documentação conforme necessário
-- Mantenha os padrões de qualidade
+### Issues
+- Report guideline inconsistencies
+- Suggest process improvements
+- Update documentation as needed
+- Maintain quality standards
 
 ---
 
-**Última atualização**: $(date)  
-**Versão**: 1.0.0  
-**Mantenedor**: Equipe Nutri-OS
+**Last updated**: $(date)  
+**Version**: 1.0.0  
+**Maintainer**: Nutri-OS Team
