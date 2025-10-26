@@ -93,6 +93,7 @@ This repository serves as a **single source of truth** for:
 ### Known Issues
 - **Modal Freeze**: Solution documented in `troubleshooting/MODAL_FREEZE_FIX.md`
 - **Focus Scope Conflicts**: Use `onSelect` with `setTimeout` for dropdowns that open modals
+- **Expanded Content Corners**: Solution documented in `troubleshooting/EXPANDED_CORNERS_FIX.md`
 
 ### How to Report Issues
 1. Check if a solution already exists in the `troubleshooting/` folder
