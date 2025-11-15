@@ -16,65 +16,63 @@ This guide documents how to add end‑to‑end encryption to any Supabase storag
 
 | Layer | Responsibility | Current Implementation |
 | --- | --- | --- |
-| Database | Persist per‑workspace keys, control access via RLS | `workspace_secrets` table (`20251115120000_secure_patient_files.sql`) |
-| Edge Function | Provide a derived key when the table is missing (CI not run, first deploy, etc.) | `supabase/functions/workspace-key` |
-| Client Hooks | Fetch/ensure keys, encrypt/decrypt blobs, orchestrate uploads & downloads | `useWorkspaceEncryptionKey`, `usePatientFiles` |
-| UI Layer | Consume hooks, display status/errors, trigger uploads/downloads | `PatientFilesSection`, `UniversalViewer`, ZIP download logic |
+| Database | Persist salted KDF metadata + fingerprints (no plaintext keys) | `workspace_key_metadata` table (`20251117120000_e2ee_workspace_keys.sql`) |
+| Edge Functions | *Nenhum* – removidos para garantir conhecimento zero no servidor | n/a |
+| Client Hooks | Derivam/retêm chaves apenas em memória, conduzem AES-GCM local | `useWorkspaceEncryptionKey`, `usePatientFiles` |
+| UI Layer | Solicita passphrase, bloqueia/desbloqueia acesso, aciona fluxos | `PatientFilesSection`, `DocumentViewer`, ZIP download logic |
 
 ---
 
 ## 3. Implementation Checklist
 
+### Workspace Passphrase & KDF
+
+- Cada workspace define uma passphrase de alta entropia, compartilhada somente entre profissionais autorizados (fora do sistema).
+- A chave simétrica é derivada exclusivamente no cliente via PBKDF2 (salt aleatório + parâmetros armazenados no banco).
+- O servidor guarda apenas `kdf_salt`, `kdf_params` e `key_fingerprint` (SHA-256 da chave), impossibilitando reconstruir o segredo.
+- Chaves nunca são persistidas em localStorage nem enviadas ao backend; vivem apenas em memória durante a sessão.
+
 ### 3.1 Database Migration
 
-1. **Create `workspace_secrets` table**
-   - Columns: `workspace_id`, `encryption_key`, `rotation_version`, `created_by`, timestamps.
-   - Add `update_workspace_secrets_updated_at` trigger.
-   - Enable RLS and add policies:
-     - Members can read.
-     - Owners/Admins can upsert/delete.
-2. **Augment target metadata table**
-   - For each logical record referencing stored blobs (e.g., `patient_files`), add:
-     - `is_encrypted boolean NOT NULL DEFAULT false`
-     - `encryption_metadata jsonb`
-3. **Update existing rows**
-   - Set `is_encrypted` to `false` explicitly to avoid `NULL` semantics.
-4. **Lock down the bucket**
+1. **Criar `workspace_key_metadata`**
+   - Colunas: `workspace_id`, `kdf_salt`, `kdf_params`, `key_fingerprint`, `created_by`, timestamps.
+   - Trigger `update_workspace_key_metadata_updated_at`.
+   - RLS:
+     - Seleção liberada para todos os membros do workspace (precisam do salt).
+     - Escrita restrita a owners/admins.
+2. **Atualizar `patient_files`**
+   - Adicionar `encryption_version integer NOT NULL DEFAULT 2`.
+   - Setar `encryption_version = 1` em arquivos legados (`is_encrypted = true`).
+3. **Remover heranças**
+   - Dropar `workspace_secrets`, gatilhos e policies antigas.
+4. **Bucket privado**
    - `UPDATE storage.buckets SET public = false WHERE id = '<bucket>';`
 5. **RLS alignment**
-   - Ensure `storage.objects` policies already gate by workspace; reuse existing patterns from `patient-files`.
+   - `storage.objects` já utiliza vínculos de workspace; revise apenas se novos buckets forem protegidos.
 
 > **Tip:** Always include `DROP POLICY IF EXISTS …` before creating policies in migrations to keep them idempotent.
 
 ### 3.2 Edge Function (`workspace-key`)
 
-Purpose: Derive a deterministic fallback key whenever the migration is not yet available.
+Purpose: Implementar derivação e validação 100% no cliente, sem qualquer dependência de segredos no servidor.
 
-Key points:
-- Validates the requesting user (JWT).
-- Checks membership in the requested workspace.
-- Derives a base64 key via `SHA-256(workspace_id + WORKSPACE_KEY_MASTER_SECRET)`.
-- Returns metadata `{ encryption_key, rotation_version: -1, source: "fallback" }`.
-- Deploy with `supabase functions deploy workspace-key`.
-
-Environment:
-- `WORKSPACE_KEY_MASTER_SECRET` optional (defaults to `SUPABASE_SERVICE_ROLE_KEY`).
+Fluxo:
+- Owners configuram uma passphrase forte e, ao inicializar, o cliente gera `kdf_salt` randômico + `key_fingerprint`.
+- O servidor guarda somente `kdf_salt`, `kdf_params` e `key_fingerprint`. Sem a passphrase, não há como recuperar a chave.
+- Cada login exige que o usuário digite a passphrase; o hook deriva a chave e mantém em memória (Zustand). Nada é persistido em localStorage.
+- Rotação = novo salt + novo fingerprint; membros devem receber a nova passphrase por canal seguro.
+- Arquivos com `encryption_version = 1` são considerados legados e precisam ser reenviados manualmente (o servidor não possui, nem deve possuir, uma chave antiga).
 
 ### 3.3 Client Hook (`useWorkspaceEncryptionKey`)
 
-Responsibilities:
-1. Fetch secret from `workspace_secrets`.
-2. Handle 404/`42P01` gracefully by calling the edge function.
-3. Cache secrets in state.
-4. Provide:
-   - `ensureEncryptionKey()`
-   - `rotateEncryptionKey()` (disabled while in fallback mode)
-   - `canManageKey` flag and error messaging.
-
-Best practices:
-- Detect missing relations by checking error code `42P01`.
-- When fallback is active, surface a warning toast so admins know migrations must run.
-- Never return the key unless the user is a workspace member.
+Responsabilidades:
+1. Carregar `workspace_key_metadata` e refletir estados (`loading`, `uninitialized`, `locked`, `ready`).
+2. Derivar a chave usando PBKDF2 e comparar com `key_fingerprint`.
+3. Expor helpers:
+   - `unlockWorkspace(passphrase)`
+   - `initializeWorkspaceKey(passphrase)` / `rotateWorkspaceKey(passphrase)` (apenas owners/admins)
+   - `lockWorkspace()` e `requireWorkspaceKey()`
+4. Nunca armazenar a chave fora de memória; destruir referências ao trocar de workspace ou ao bloquear manualmente.
 
 ### 3.4 Encryption Utilities (`src/lib/security/crypto.ts`)
 
@@ -92,9 +90,9 @@ Add unit tests (`crypto.test.ts`) covering:
 ### 3.5 Domain Hook (`usePatientFiles` Example)
 
 1. Before uploading:
-   - Call `ensureEncryptionKey()`.
-   - Encrypt the `File` via `encryptBlobWithMetadata`.
-   - Store metadata + `is_encrypted = true`.
+   - Chame `requireWorkspaceKey()` para garantir que o workspace está desbloqueado.
+   - Criptografe o `File` via `encryptBlobWithMetadata`.
+   - Armazene metadata + `encryption_version = 2`.
 2. Download/preview:
    - Fetch blob from storage.
    - If `is_encrypted`, decrypt with metadata.
@@ -102,7 +100,7 @@ Add unit tests (`crypto.test.ts`) covering:
 3. Bulk ZIP exports:
    - Iterate files, call `getFileBlob`, zip buffers.
 4. Legacy files:
-   - If `is_encrypted` is `false`, skip decryption but left shift users to reupload.
+   - Se `encryption_version < 2`, bloqueie a visualização e peça reupload.
 
 ### 3.6 UI Integration
 
@@ -121,7 +119,9 @@ Add unit tests (`crypto.test.ts`) covering:
 2. **Apply Locally**
    - `supabase db reset` (local) or `supabase start`.
 3. **Push to Remote**
-   - `supabase db push` (ensure CLI is up to date).
+   - `supabase db push` (ensure CLI is up to date) – applies schema + wrapped columns.
+   - Run the backfill: `WORKSPACE_KEY_MASTER_SECRET=... SUPABASE_SERVICE_ROLE_KEY=... npx ts-node scripts/backfillWorkspaceSecrets.ts`
+   - `supabase db push` again to execute the guard migration that drops `encryption_key`.
    - If remote has extra migrations, run `supabase migration repair` per CLI hints.
 4. **Deploy Functions**
    - `supabase functions deploy workspace-key`.
